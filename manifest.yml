@@ -1,0 +1,18 @@
+lzc-sdk-version: 0.1
+name: Regex Vis
+package: cloud.lazycat.app.regex-vis
+version: 0.0.2
+description: 一个辅助学习、编写和验证正则的工具
+license: hhttp://www.apache.org/licenses/
+homepage: https://github.com/Bowen7/regex-vis
+author: Bowen7
+application:
+  subdomain: regex-vis
+  public_path:
+    - /
+  routes:
+    - /=file:///lzcapp/pkg/content/
+unsupported_platforms:
+  - ios
+  - android
+  - tvos
