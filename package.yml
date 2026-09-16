@@ -14,3 +14,6 @@ locales:
   zh:
     description: "一个辅助学习、编写和验证正则的工具"
     name: Regex Vis
+  en:
+    description: "A tool for learning, writing and validating regular expressions"
+    name: Regex Vis
