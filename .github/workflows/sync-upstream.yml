@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: sync-upstream
@@ -27,6 +28,7 @@ jobs:
       - name: Build upstream HEAD, bump version, tag
         env:
           UPSTREAM_REPO: https://github.com/Bowen7/regex-vis
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -63,3 +65,6 @@ jobs:
           git commit -m "chore: sync upstream ${upstream_sha:0:7} as v${new}"
           git tag "v${new}"
           git push origin "HEAD:main" "refs/tags/v${new}"
+
+          # GITHUB_TOKEN pushes do not trigger other workflows; dispatch explicitly
+          gh workflow run lazycat.yml --repo "${GITHUB_REPOSITORY}" --ref "v${new}"
