@@ -4,8 +4,8 @@
 
 ## 模式
 
-- **静态 Web 应用**：`dist/` 为上游最新源码（Vue 3 + Vite）的构建产物，直接打包进 LPK，无 Docker 镜像。
-- **git 版本源**：更新上游 = 重新构建 `dist/` 并打 `v*` tag 触发发布（上游自身不发版，package.json 版本恒为 0.1.0）。
+- **静态 Web 应用**：`dist/` 为上游源码（Vue 3 + Vite）的构建产物，直接打包进 LPK，无 Docker 镜像。
+- **自动跟上游**：`sync-upstream.yml` 每日检查上游 `Bowen7/regex-vis` main HEAD（上游无 tag/release，以 commit SHA 为准）；有变化时在 CI 内 `pnpm build` 重建 `dist/`，自动 patch +1 打 `v*` tag 触发发布（`.upstream-sha` 记录已构建的 SHA 基线）。
 - **双商店发布**：官方平台 + 喵喵商店（MiaoMiao private store）。
 
 ## 结构
@@ -19,14 +19,14 @@
 | `icon.png` | 图标 |
 | `.github/lazycat-action.yml` | [lazycat-github-action](https://github.com/ca-x/lazycat-github-action) 配置 |
 
-## 更新上游
+## 更新流程（全自动）
 
-```sh
-git clone https://github.com/Bowen7/regex-vis && cd regex-vis
-pnpm install && pnpm build   # 产物在 dist/
-# 替换本仓库 dist/ 后提交并打 tag：
-git tag v0.0.x && git push origin master --tags
-```
+每日 `sync-upstream.yml`（约北京时间 14:41）自动执行；也可手动 Run workflow 立即检查：
+
+1. 对比上游 main HEAD SHA 与 `.upstream-sha`，无变化则跳过；
+2. clone 上游 → `pnpm@9 install && build` 重建 `dist/`；
+3. `package.yml` 版本自动 patch +1，提交并打 `v*` tag；
+4. tag 触发 `lazycat.yml` 构建并发布双商店。
 
 ## 所需 Secrets
 

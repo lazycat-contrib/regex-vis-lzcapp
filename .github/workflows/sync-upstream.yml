@@ -1,0 +1,65 @@
+name: Sync upstream and release
+
+on:
+  # Daily upstream check; GitHub Actions cron is UTC (CST = UTC+8)
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build upstream HEAD, bump version, tag
+        env:
+          UPSTREAM_REPO: https://github.com/Bowen7/regex-vis
+        run: |
+          set -euo pipefail
+
+          upstream_sha="$(git ls-remote "${UPSTREAM_REPO}" HEAD | awk '{print $1}')"
+          built_sha="$(cat .upstream-sha 2>/dev/null || echo none)"
+          if [[ "${upstream_sha}" == "${built_sha}" ]]; then
+            echo "Upstream unchanged (${upstream_sha:0:7}); nothing to do"
+            exit 0
+          fi
+          echo "Upstream ${built_sha:0:7} -> ${upstream_sha:0:7}; rebuilding"
+
+          rm -rf /tmp/upstream
+          git clone -q "${UPSTREAM_REPO}" /tmp/upstream
+
+          npm install -g pnpm@9
+          cd /tmp/upstream
+          pnpm install --frozen-lockfile
+          pnpm build
+
+          cd "${GITHUB_WORKSPACE}"
+          rm -rf dist
+          cp -r /tmp/upstream/dist dist
+          echo "${upstream_sha}" > .upstream-sha
+
+          old="$(awk '/^version:/{print $2}' package.yml)"
+          IFS=. read -r ma mi pa <<<"${old}"
+          new="${ma}.${mi}.$((pa+1))"
+          sed -i "s/^version: .*/version: ${new}/" package.yml
+          echo "Releasing v${new} from upstream ${upstream_sha:0:7}"
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A dist .upstream-sha package.yml
+          git commit -m "chore: sync upstream ${upstream_sha:0:7} as v${new}"
+          git tag "v${new}"
+          git push origin "HEAD:main" "refs/tags/v${new}"
