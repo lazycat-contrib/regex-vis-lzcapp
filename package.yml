@@ -1,5 +1,5 @@
 package: cloud.lazycat.app.regex-vis
-version: 0.0.3
+version: 0.0.4
 name: Regex Vis
 description: "一个辅助学习、编写和验证正则的工具"
 license: http://www.apache.org/licenses/
