@@ -1,0 +1,30 @@
+version: 1
+
+project:
+  root: .
+  build_config: lzc-build.yml
+  package_file: package.yml
+  output: .lazycat-build/regex-vis.lpk
+  target_arch: amd64
+
+update:
+  strategy: publish
+  allow_downgrade: false
+  version_source:
+    type: git
+
+build:
+  run_buildscript: false
+
+# 静态 Web 应用：无 Docker 镜像，dist/ 构建产物直接打包
+
+stores:
+  official:
+    enabled: true
+    skip_if_version_exists: true
+    changelog_locales: [zh, en]
+  private:
+    enabled: true
+    skip_if_version_exists: true
+    name: Regex Vis
+    summary: 一个辅助学习、编写和验证正则的工具
